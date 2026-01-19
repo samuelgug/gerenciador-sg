@@ -40,7 +40,7 @@
         ::-webkit-scrollbar-track { background: var(--bg-body); }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-        aside { width: 250px; background-color: var(--bg-sidebar); border-right:1px solid var(--border); display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; overflow-y: auto; }
+        aside { width: 250px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; overflow-y: auto; }
         aside h2 { color: var(--primary); margin-bottom: 30px; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
         
         nav button {
@@ -73,7 +73,7 @@
         .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
         .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
 
-        .card { background-color: var(--bg-card); border-radius: 8px; padding: 20px; border:1px solid var(--border); margin-bottom: 20px; }
+        .card { background-color: var(--bg-card); border-radius: 8px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
         
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 6px; color: var(--text-secondary); font-size: 0.9rem; }
@@ -155,8 +155,24 @@
 </head>
 <body>
 
+<!-- INÍCIO DA TRAVA DE SEGURANÇA -->
+<div id="lock-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:var(--bg-body); z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+    <div style="text-align:center;">
+        <h2 style="color:var(--primary); margin-bottom:20px;">Acesso Restrito</h2>
+        <p style="margin-bottom:20px; color:var(--text-secondary);">Digite a senha para acessar o Gerenciador SG Multimídia</p>
+        <input type="password" id="pass-input" placeholder="Senha" style="padding:15px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); color:white; font-size:1.1rem; text-align:center;">
+        <button onclick="checkPassword()" style="margin-top:20px; padding:10px 30px; font-size:1rem;">Entrar</button>
+    </div>
+</div>
+
+<!-- Esconde o conteúdo principal inicialmente -->
+<style id="lock-css">
+    aside, main, #toast-container { display: none !important; }
+    body { overflow: hidden; } /* Impede rolagem para não ver o que está atrás */
+</style>
+<!-- FIM DA TRAVA DE SEGURANÇA -->
+
     <aside>
-        <!-- AQUI ESTÁ O NOME ALTERADO -->
         <h2><i class="fas fa-film"></i> Gerenciador SG</h2>
         <nav>
             <button onclick="app.navigate('dashboard')" class="active"><i class="fas fa-chart-line"></i> Dashboard</button>
@@ -636,6 +652,7 @@
         };
 
         const app = {
+            initialized: false, // Flag para evitar carregar duas vezes
             tempBudgetItems: [],
             editingServiceId: null,
             editingComboId: null,
@@ -645,6 +662,7 @@
 
             init() {
                 Store.init();
+                this.initialized = true;
             },
 
             renderAll() {
@@ -737,6 +755,7 @@
                         <span>${s.name} (${Utils.formatCurrency(s.price)})</span>
                     </div>
                 `).join('');
+                
                 this.updateComboPreview();
                 this.openModal('modal-combo');
             },
@@ -1415,15 +1434,44 @@
             }
         };
 
+        // Configuração da Senha e Inicialização
+        const MINHA_SENHA_SECRETA = "9107"; 
+
+        function checkPassword() {
+            const input = document.getElementById('pass-input').value;
+            
+            if(input === MINHA_SENHA_SECRETA) {
+                // Remove a trava correta e inicia o sistema
+                document.getElementById('lock-screen').style.display = 'none';
+                
+                // Remove apenas o estilo de trava pelo ID
+                const lockStyle = document.getElementById('lock-css');
+                if(lockStyle) lockStyle.remove();
+                
+                // Força o app a iniciar normalmente (apenas uma vez)
+                if (!app.initialized) {
+                    app.init();
+                } 
+            } else {
+                alert('Senha incorreta!');
+            }
+        }
+
+        // Permite apertar Enter para logar
+        document.getElementById('pass-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        // Inicialização de Scripts (Service Worker)
         document.addEventListener('DOMContentLoaded', () => {
-            app.init();
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
                 .then(() => console.log('Service Worker Registrado'))
                 .catch(err => console.log('Service Worker: erro', err));
             }
         });
-        document.getElementById('search-budget')?.addEventListener('input', () => app.renderBudgets());
     </script>
 </body>
 </html>
