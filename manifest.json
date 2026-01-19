@@ -1,0 +1,15 @@
+{
+  "name": "Gerenciador SG Multimídia",
+  "short_name": "SG Multimídia",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#121214",
+  "theme_color": "#8257e5",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
